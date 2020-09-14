@@ -24,7 +24,7 @@ def Visualization(train_set,w):
     plt.figure()
     x1 = np.linspace(0, 8, 100)
     x2 = (-w[-1]-w[0]*x1)/w[1]
-    plt.plot(x1, x2, color='r', label='Perceptron')
+    plt.plot(x1, x2, color='r', label='OriginalPerceptron')
     for i in range(train_set.shape[0]):
         if train_set[i][0] == 1:
             plt.scatter(train_set[i][1], train_set[i][2], s=100)
