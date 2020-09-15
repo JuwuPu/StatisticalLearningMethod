@@ -19,6 +19,19 @@ def df2ndarray(data):
                 data_matrix[i][j] = 2
     return data_matrix
 
+def SplitData(data,ratio):
+    np.random.shuffle(data)
+    m, n = data.shape
+    train_set = data[0:int(m*ratio), :]
+    test_set = data[int(m*ratio):, :]
+    return train_set, test_set
+
+
 if __name__ == '__main__':
     data = pd.read_csv('IRIS.csv', header=None)
     data_matrix = df2ndarray(data)
+    train, test = SplitData(data_matrix, 0.7)
+
+
+
+
