@@ -7,9 +7,11 @@ class LoadData:
     '''
 
     def __init__(self):
+
         '''
         Load data class to input original data.
         '''
+
         self.load_data = None
         self.df2ndarray = None
         self.SplitData = None
@@ -19,6 +21,11 @@ class LoadData:
         return data
 
     def df2ndarray(data):
+
+        '''
+        This function only for IRIS data precess.
+        '''
+
         rows, columns = data.shape
         data_matrix = np.zeros((rows - 1, columns))
         data = data.values

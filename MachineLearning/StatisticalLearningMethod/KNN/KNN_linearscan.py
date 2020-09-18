@@ -1,31 +1,7 @@
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 from scipy import stats
-
-def df2ndarray(data):
-    rows, columns = data.shape
-    data_matrix = np.zeros((rows-1, columns))
-    data = data.values
-    for i in range(rows-1):
-        for j in range(columns):
-            if j != 4:
-                data_matrix[i][j] = float(data[i+1][j])
-            elif data[i+1][j] == 'Iris-setosa':
-                data_matrix[i][j] = 0
-            elif data[i+1][j] == 'Iris-versicolor':
-                data_matrix[i][j] = 1
-            else:
-                data_matrix[i][j] = 2
-    return data_matrix
-
-def SplitData(data,ratio):
-    np.random.shuffle(data)
-    m, n = data.shape
-    train_set = data[0:int(m*ratio[0]), :]
-    cv_set = data[int(m*ratio[0]):int(m*(ratio[0]+ratio[1])), :]
-    test_set = data[int(m*(ratio[0]+ratio[1])):, :]
-    return train_set, cv_set, test_set
+from LoadData import LoadData as LD
 
 def k_value(train, cv, Max_k):
     m, n = train.shape      # the rows of train --> m, the column of train -->n
@@ -89,9 +65,9 @@ def KNN(train, test, k_value):
     return Accuracy, test_Predict
 
 if __name__ == '__main__':
-    data = pd.read_csv('IRIS.csv', header=None)
-    data_matrix = df2ndarray(data)
-    train, cv, test = SplitData(data_matrix, (0.5, 0.25, 0.25))
+    data = LD.load_data('IRIS.csv')
+    data_matrix = LD.df2ndarray(data)
+    train, cv, test = LD.SplitData(data_matrix, (0.5, 0.25, 0.25))
     k = k_value(train, cv, 30)
     print('k value is {0}'.format(k))
     Accuracy, predict_set = KNN(train, test, k)
