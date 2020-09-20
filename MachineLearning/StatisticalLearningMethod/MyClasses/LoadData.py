@@ -6,16 +6,6 @@ class LoadData:
     Data pre-processing.
     '''
 
-    def __init__(self):
-
-        '''
-        Load data class to input original data.
-        '''
-
-        self.load_data = None
-        self.df2ndarray = None
-        self.SplitData = None
-
     def load_data(loaction):
         data = pd.read_csv(loaction, header=None)
         return data
@@ -48,3 +38,5 @@ class LoadData:
         cv_set = data[int(m * ratio[0]):int(m * (ratio[0] + ratio[1])), :]
         test_set = data[int(m * (ratio[0] + ratio[1])):, :]
         return train_set, cv_set, test_set
+
+
