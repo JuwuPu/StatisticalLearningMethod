@@ -6,6 +6,13 @@ class LoadData:
     Data pre-processing.
     '''
 
+    def Load_data(train, test):
+        train = pd.read_csv(train)
+        test = pd.read_csv(test)
+        y = train.iloc[:, -1]
+        train = train.drop(labels=train.columns[-1], axis=1)
+        return np.array(train), np.array(y), np.array(test)
+
     def load_data(loaction):
         data = pd.read_csv(loaction, header=None)
         return data
