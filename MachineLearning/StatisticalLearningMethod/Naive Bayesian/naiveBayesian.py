@@ -48,8 +48,6 @@ def bayesianModel(train, train_label):
 
 
 
-
-
 def main():
     train, train_label, test, test_label = load_data('mnist_train.csv', 'mnist_test.csv')
     train = normalize(train)
