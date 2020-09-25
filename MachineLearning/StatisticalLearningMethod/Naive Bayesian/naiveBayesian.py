@@ -74,7 +74,7 @@ def main():
     test = normalize(test)
     prioriP, posteriorP = bayesianModel(train, train_label)
     accuracy = predict(test, test_label, prioriP, posteriorP)
-    print("The accuracy of MNIST for the Naive Bayes Classifier is {0:.2f}%".format(accuracy*100))
+    print("The accuracy of MNIST dataset for the Naive Bayes Classifier is {0:.2f}%".format(accuracy*100))
 
 if __name__ == '__main__':
     start = time.time()
