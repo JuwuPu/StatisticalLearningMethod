@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import time
 from collections import Counter
+import progressbar as pgb
 
 def load_data(trainfile, testfile):
     train = pd.read_csv(trainfile, header=None)
@@ -19,7 +20,8 @@ def normalize(data):
     '''
     m = data.shape[0]
     n = np.array(data).shape[1]
-    for i in range(m):
+    progress = pgb.ProgressBar()
+    for i in progress(range(m)):
         for j in range(n):
             if data[i, j] != 0:
                 data[i, j] = 1
@@ -51,8 +53,10 @@ def bayesianModel(train, train_label):
     return prioriP, posteriorP
 
 def predict(test, test_label, prioriP, posteriorP):
+    print('Predict starting')
     predict_test = np.zeros(test.shape[0])
-    for i in range(test.shape[0]):
+    progress = pgb.ProgressBar()
+    for i in progress(range(test.shape[0])):
         probability = np.zeros(10)
         for j in range(10):
             temp = sum([np.log(1 - posteriorP[j][m])
