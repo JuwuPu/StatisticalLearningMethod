@@ -80,4 +80,4 @@ if __name__ == '__main__':
     start = time.time()
     main()
     end = time.time()
-    print('Time cost {0}min{1:.2f}s'.format(int((end - start)//60), (end - start)%60))
+    print('Time cost {0}min{1:.2f}s'.format(int((end - start)//60), (end - start) % 60))
