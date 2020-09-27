@@ -28,10 +28,10 @@ This file will use the ID3 algorithms to predict the MNIST dataset.
 
 # Section[1]
 def load_data(trainfile, testfile):
-    '''
-    load data
-    Divide the train set into train set and cross-validation set  in ratio.
-    '''
+    """
+        load data
+        Divide the train set into train set and cross-validation set  in ratio.
+    """
     train = pd.read_csv(trainfile, header=None)
     test = pd.read_csv(testfile, header=None)
     np.array(train)
@@ -50,9 +50,9 @@ def load_data(trainfile, testfile):
            np.array(test), np.array(test_label)
 
 def normalize(data):
-    '''
-    Binarized data, let data becoming 0-1 distribution.
-    '''
+    """
+        Binarized data, let data becoming 0-1 distribution.
+    """
     m = data.shape[0]
     n = np.array(data).shape[1]
     progress = pgb.ProgressBar()
@@ -76,10 +76,10 @@ namely
 
 '''
 def _cal_entropy(x):
-    '''
+    """
         calculate Shanno entropy of x
         H(X) = -Σ(pi * logpi )
-    '''
+    """
     classNum = len(x)   # total number of sample
     cnt_x = Counter(x)  # calculate the number of each category
     entropy = float(0)
@@ -92,9 +92,9 @@ def _cal_entropy(x):
 def _cal_conditionalEnt(x, y):
     # x means condition -> feature vector
     # y means dataset category(such as MNIST classNum = 10) -> label
-    '''
+    """
     H(Y|X) = Σ( pi * H(Y|X = xi) )
-    '''
+    """
     classNum = len(x)
     cnt_x = Counter(x)  # due to image binarization, there are only two category(0-1)
     entropy = float(0)
@@ -105,13 +105,12 @@ def _cal_conditionalEnt(x, y):
     return entropy
 
 def _cal_infoGain(x, y):
-    '''
+    """
     g(D,A) = H(D) - H(D|A)
-    '''
+    """
     Hd = _cal_entropy(y)
     condEnt = _cal_conditionalEnt(x, y)
-    infoGain = Hd - condEnt
-    return infoGain
+    return Hd - condEnt
 
 
 # Section[3]
@@ -144,8 +143,8 @@ ID3 algorithm: The core of ID3 is to apply information gain criteria to
         recursively call step (1) ~ step (5) to get the subtree Ti, and return Ti.
         
 '''
-class Tree():
-    def __init__(self, node_type, Class = None, feature = None):
+class Tree(object):
+    def __init__(self, node_type, Class=None, feature=None):
         self.node_type = node_type
         self.dict = {}
         self.Class = Class
@@ -160,22 +159,18 @@ class Tree():
         tree = self.dict[features[self.feature]]
         return tree.predict(features)
 
-def CreateTree(train, train_label, features, epsilon):
+def CreateTree(train, train_label, epsilon):
+    feature_location = [i for i in range(train.shape[1])]
     classNum = len(Counter(train_label))
     leaf = 'leaf'
     internal = 'internal'
 
     # Step 1
+    label_set = set(train_label)
+    if len(label_set) == 1:
+        return Tree(leaf, Class=label_set.pop())
 
-
-
-
-
-
-
-
-
-
+    #Step 2
 
 
 def main():
