@@ -3,7 +3,8 @@ import numpy as np
 import pandas as pd
 import progressbar as pgb
 from collections import Counter
-from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+
 '''
 This file will use the ID3 algorithms to predict the MNIST dataset.
 
@@ -34,20 +35,13 @@ def load_data(trainfile, testfile):
     """
     train = pd.read_csv(trainfile, header=None)
     test = pd.read_csv(testfile, header=None)
-    np.array(train)
-    train, cv = train_test_split(train)
-    m, n = train.shape
-    p, q = cv.shape
-    train_label = train[:, 0]
-    train = train[:, 1:].reshape(m, n-1)
-    cv_label = cv[:, 0]
-    cv = cv[:, 1:].reshape(p, q-1)
+    train_label = train.iloc[:, 0]
     test_label = test.iloc[:, 0]
+    train = train.drop(labels=train.columns[0], axis=1)
     test = test.drop(labels=test.columns[0], axis=1)
     print('data is loaded')
-    return train, train_label, \
-           cv, cv_label, \
-           np.array(test), np.array(test_label)
+    return np.array(train), np.array(train_label), np.array(test), np.array(test_label)
+
 
 def normalize(data):
     """
@@ -108,9 +102,7 @@ def _cal_infoGain(x, y):
     """
     g(D,A) = H(D) - H(D|A)
     """
-    Hd = _cal_entropy(y)
-    condEnt = _cal_conditionalEnt(x, y)
-    return Hd - condEnt
+    return _cal_entropy(y) - _cal_conditionalEnt(x, y)
 
 
 # Section[3]
@@ -159,8 +151,7 @@ class Tree(object):
         tree = self.dict[features[self.feature]]
         return tree.predict(features)
 
-def CreateTree(train, train_label, epsilon):
-    feature_location = [i for i in range(train.shape[1])]
+def CreateTree(train, train_label,features, epsilon):
     classNum = len(Counter(train_label))
     leaf = 'leaf'
     internal = 'internal'
@@ -170,15 +161,65 @@ def CreateTree(train, train_label, epsilon):
     if len(label_set) == 1:
         return Tree(leaf, Class=label_set.pop())
 
-    #Step 2
+    # Step 2
+    max_class =max(Counter(train_label))
+    max_len = Counter(train_label)[max_class]
+    if features == 0:
+        return Tree(leaf, Class=max_class)
+
+    # Step 3
+    _feature = 0
+    _infoGain = 0
+    for item in features:
+        A = np.array(train[:, item])    # feature vector
+        infoGain = _cal_infoGain(A, train_label)
+        if infoGain > _infoGain:
+            _infoGain, _feature = infoGain, item
+
+    # Step 4
+    if _infoGain < epsilon:
+        return Tree(leaf, Class=max_class)
+
+    # Step 5
+    sub_features = filter(lambda x: x!=_feature, features)
+    tree = Tree(internal, feature=_feature)
+
+    # Step 6
+    feature_vec = np.array(train[:, _feature])
+    feature_val = list(Counter(feature_vec))
+    for val in feature_val:
+        index = []
+        for i in range(len(train_label)):
+            if train[i][_feature] == val:
+                index.append(i)
+    sub_train = train[index]
+    sub_train_label = train_label[index]
+    sub_tree = CreateTree(sub_train, sub_train_label, sub_features, epsilon)
+    tree.add(feature_val, sub_tree)
+
+    print('Decision Tree Created')
+    return tree
+
+# Section[5]
+def predict(test, tree):
+    result = []
+    for features in test:
+        tmp_predict = tree.predict(features)
+        result.append(tmp_predict)
+    print('Prediction complete')
+    return np.array(result)
 
 
 def main():
-    train, train_label, cv, cv_label, test, test_label\
+    train, train_label, test, test_label\
         = load_data('mnist_train.csv', 'mnist_test.csv')
     train = normalize(train)
-    cv = normalize(cv)
     test = normalize(test)
+    tree = CreateTree(train, train_label, features=[i for i in range(train.shape[1])], epsilon=0.01)
+    test_pred = predict(test, tree)
+    score = accuracy_score(test_label, test_pred)
+    print("the accuracy score is {:.4f}".format(score))
+
 
 if __name__ == '__main__':
     start = time.time()
