@@ -40,7 +40,7 @@ def load_data(trainfile, testfile):
     return np.array(train), np.array(train_label), np.array(test), np.array(test_label)
 
 
-def normalize(data):
+def normalize(data, threshold):
     """
         Binarized data, let data becoming 0-1 distribution.
     """
@@ -49,7 +49,7 @@ def normalize(data):
     progress = pgb.ProgressBar()
     for i in progress(range(m)):
         for j in range(n):
-            if data[i, j] > 50:
+            if data[i, j] > int(threshold):
                 data[i, j] = 1
             else:
                 data[i, j] = 0
@@ -158,9 +158,10 @@ def CreateTree(train, train_label,features, epsilon):
         return Tree(leaf, Class=label_set.pop())
 
     # Step 2
-    (max_class, max_len) = \
-        max([(i, len(list(filter(lambda x: x == i, train_label))))
-             for i in range(10)], key=lambda x: x[1])
+    # (max_class, max_len) = \
+    #     max([(i, len(list(filter(lambda x: x == i, train_label))))
+    #          for i in range(10)], key=lambda x: x[1])
+    max_class = Counter(train_label).most_common(1)[0][0]
     if len(features) == 0:
         return Tree(leaf, Class=max_class)
 
@@ -209,8 +210,8 @@ def predict(test, tree):
 def main():
     train, train_label, test, test_label\
         = load_data('mnist_train.csv', 'mnist_test.csv')
-    train = normalize(train)
-    test = normalize(test)
+    train = normalize(train, threshold=50)
+    test = normalize(test, threshold=50)
     tree = CreateTree(train, train_label, features=[i for i in range(train.shape[1])], epsilon=0.1)
     print('Decision Tree Created')
     test_pred = predict(test, tree)
