@@ -1,8 +1,9 @@
 import time
 import numpy as np
 import pandas as pd
-import progressbar as pgb
 from collections import Counter
+from sklearn.model_selection import train_test_split
+import cv2
 
 '''
 This file will use the C4.5 algorithms to predict the MNIST dataset.
@@ -35,31 +36,39 @@ def load_data(trainfile, testfile):
         load data
         Divide the train set into train set and cross-validation set  in ratio.
     """
-    train = pd.read_csv(trainfile, header=None)
-    test = pd.read_csv(testfile, header=None)
-    train_label = train.iloc[:, 0]
-    test_label = test.iloc[:, 0]
-    train = train.drop(labels=train.columns[0], axis=1)
-    test = test.drop(labels=test.columns[0], axis=1)
-    print('data is loaded')
-    return np.array(train), np.array(train_label), np.array(test), np.array(test_label)
+    raw_train = pd.read_csv(trainfile, header=None)
+    raw_test = pd.read_csv(testfile, header=None)
+    train = raw_train.values
+    test = raw_test.values
+    train_features = train[0::, 1::]
+    train_label = train[::, 0]
+    test_features = test[0::, 1::]
+    test_label = test[::, 0]
+    train, cv , train_label, cv_label = train_test_split(train_features,train_label, test_size=0.33, random_state=42)
+    return train, train_label, \
+           cv, cv_label, \
+           test_features, test_label
 
 
-def normalize(data, threshold):
-    """
-        Binarized data, let data becoming 0-1 distribution.
-    """
-    m = data.shape[0]
-    n = np.array(data).shape[1]
-    progress = pgb.ProgressBar()
-    for i in progress(range(m)):
-        for j in range(n):
-            if data[i, j] > int(threshold):
-                data[i, j] = 1
-            else:
-                data[i, j] = 0
-    print('Data is binarization')
-    return data
+def binaryzation(img):
+    cv_img = img.astype(np.uint8)
+    cv2.threshold(cv_img,50,1,cv2.THRESH_BINARY,cv_img)
+    return cv_img
+
+
+def binaryzation_features(trainset):
+    features = []
+    for img in trainset:
+        img = np.reshape(img,(28,28))
+        cv_img = img.astype(np.uint8)
+
+        img_b = binaryzation(cv_img)
+        features.append(img_b)
+
+    features = np.array(features)
+    features = np.reshape(features,(-1,784))
+    return features
+
 
 
 # Section[2]
@@ -226,10 +235,13 @@ def predict(test, tree):
 
 
 def main():
-    train, train_label, test, test_label \
+    train, train_label, cv, cv_label, test, test_label \
         = load_data('mnist_train.csv', 'mnist_test.csv')
-    train = normalize(train, threshold=50)
-    test = normalize(test, threshold=50)
+    print('data is loaded')
+    train = binaryzation_features(train)
+    cv = binaryzation_features(cv)
+    test = binaryzation_features(test)
+    print('binaryzation features')
     tree = CreateTree(train, train_label, features=[i for i in range(train.shape[1])], epsilon=0.1)
     print('Decision Tree Created')
     test_pred = predict(test, tree)
