@@ -22,9 +22,6 @@ This file will use the C4.5 algorithms to predict the MNIST dataset.
     Section[3] - Create Decision Tree
             C4.5 algorithm
             
-    Section[4] - Pruning
-            calculate the empirical entropy in each node
-            pruning the leaf node
 
     Section[4] - Predict
 '''
@@ -219,12 +216,6 @@ def CreateTree(train, train_label, features, epsilon):
     return tree
 
 # Section[4]
-'''
-
-'''
-
-
-# Section[5]
 def predict(test, tree):
     result = []
     for features in test:
