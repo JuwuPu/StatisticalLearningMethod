@@ -5,6 +5,7 @@ from collections import Counter
 from sklearn.model_selection import train_test_split
 import cv2
 import sys
+import copy
 sys.setrecursionlimit(1000000)
 
 # Section[1]
@@ -79,11 +80,11 @@ class Tree(object):
     def add(self, val, tree):
         self.dict[val] = tree
 
-    def predict(self, features):
-        if self.node_type == 'leaf':
-            return self.max_Class
-        tree = self.dict[features[self.feature_index]]
-        return tree.perdict(features)
+    # def predict(self, features):
+    #     if self.node_type == 'leaf':
+    #         return self.max_Class
+    #     tree = self.dict[features[self.feature_index]]
+    #     return tree.perdict(features)
 
     # def pre_oder(self, tree):         # preorder traverse
     #     if tree == None:
@@ -127,16 +128,16 @@ class Tree(object):
             sub_tree.append(tmp_subtree)
         return sub_tree, class_set, nodetype_set
 
-
-def delete(tree, key):
-    if tree == key:
-        tree.dict = {}
-        tree.max_Class = max(tree.Class)
-        tree.node_type = 'leaf'
-        return tree
-    if len(tree.dict) > 0:
-        delete(tree.dict[0], key)
-        delete(tree.dict[1], key)
+    @classmethod
+    def delete(self, tree, key):
+        if tree == key:
+            tree.dict = {}
+            tree.max_Class = max(tree.Class)
+            tree.node_type = 'leaf'
+            return tree
+        if len(tree.dict) > 0:
+            self.delete(tree.dict[0], key)
+            self.delete(tree.dict[1], key)
 
 def CART(train, train_label, features_index, epsilon):
     leaf = 'leaf'
@@ -194,11 +195,19 @@ def pruning(tree, cv, cv_label):
     # k, T = 0, tree        # (1)
 
     alpha = float('inf')  # (2)
-    subtree_array = [tree]
-    root = tree.Class
+    # subtree_array = [tree]
+    T = copy.deepcopy(tree)
+
+
+    optimal_subtree = tree
+    cv_pred = predict(T, cv)
+    score = (cv_pred == cv_label).sum() / len(cv_label)
+    best_score = score
 
     while 1:
-        sub_tree, class_set, nodetype_set = Tree.post_order(subtree_array[-1])   # (3)
+        if len(T.dict) == 0:
+            break
+        sub_tree, class_set, nodetype_set = Tree.post_order(T)   # (3)
         tmp_alpha = alpha
         location_subtree = 0
         for i in range(len(nodetype_set)):
@@ -215,32 +224,31 @@ def pruning(tree, cv, cv_label):
                     tmp_alpha = gt
                     location_subtree = i
         pruned_subtree = sub_tree[location_subtree]
-        if pruned_subtree.Class == root:
-            break
-        post_pruning_tree = delete(subtree_array[-1], pruned_subtree)
-        subtree_array.append(post_pruning_tree)
+        Tree.delete(T, pruned_subtree)
+        # tmp_T = copy.deepcopy(T)
+        # subtree_array.append(tmp_T)
 
-    best_score = 0
-    optimal_subtree = tree
-    for j in subtree_array:
-        cv_pred = predict(j, cv)
+        cv_pred = predict(T, cv)
         score = (cv_pred == cv_label).sum() / len(cv_label)
         if best_score < score:
             best_score = score
-            optimal_subtree = j
+            optimal_subtree = copy.deepcopy(T)
 
     return optimal_subtree
 
 # Section[5]
+def node_pred(tree, features):
+    if tree.node_type == 'leaf':
+        return tree.max_Class
+    tree = tree.dict[features[tree.feature_index]]
+    return node_pred(tree, features)
+
 def predict(tree, test):
     result = []
     for features in test:
-        tmp_predict = tree.perdict(features)
+        tmp_predict = node_pred(tree, features)
         result.append(tmp_predict)
     return np.array(result)
-
-
-
 
 def main():
     start = time.perf_counter()
