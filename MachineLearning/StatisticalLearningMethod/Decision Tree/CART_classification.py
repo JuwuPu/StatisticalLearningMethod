@@ -144,7 +144,7 @@ def CART(train, train_label, features_index, epsilon):
     internal = 'internal'
 
     label_set = set(train_label)
-    if label_set == 1:
+    if len(label_set) == 1:
         return Tree(leaf, Class=train_label, max_Class=label_set.pop())
 
     max_class = Counter(train_label).most_common(1)[0][0]
