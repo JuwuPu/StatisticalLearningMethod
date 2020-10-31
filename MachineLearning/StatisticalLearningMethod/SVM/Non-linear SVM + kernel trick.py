@@ -14,8 +14,10 @@ class SVM(object):
     def predict(self, test, test_labels):
         test_labels[test_labels == 0] = -1
         pred = []
+        a = []
         for item in test:
-            temp = sum(GKF(item, self.features) * self.labels * self.alpha) + self.b
+            temp = sum(kernel(item, self.features) * self.labels * self.alpha) + self.b
+            a.append(temp)
             pred.append(np.sign(temp))
         return sum(pred == test_labels) / len(test_labels)
 
@@ -26,16 +28,21 @@ def get_data():
         train_test_split(X, y, test_size=0.25, random_state=33)
     return X_train, X_test, y_train, y_test
 
-def GKF(x,z,sigma=0.1):
+def kernel(x,z,sigma=1,p=2):
     """
     Gaussian kernel function
     """
-    if type(z) == tuple:
+    if len(z.shape) == 2:
         return np.exp(-(np.sum((z-x)**2, axis=1)**0.5)) / (2 * sigma**2)
     else:
         return np.exp(-(np.sum((z-x)**2)**0.5)) / (2 * sigma**2)
 
-def SMO_train(features, labels, max_passes=100, C=1, tol=0.001):
+    """
+    Polynomial kernel function
+    """
+    # return (np.inner(x, z)+1)**p
+
+def SMO_train(features, labels, max_passes=100, C=5, tol=0.01):
     """
     max_passes      # max # of times to iterate over alpha's without changing
     C               # regularization parameter
@@ -48,13 +55,13 @@ def SMO_train(features, labels, max_passes=100, C=1, tol=0.001):
     while passes < max_passes:
         num_changed_alphas = 0
         for i in range(len(labels)):
-            temp_list = [i for i in range(len(labels))]
-            temp_list.pop(i)
-            error_i = sum(GKF(features[i], features) * alpha * labels) + b - labels[i]
-            if (labels[i] * error_i < -tol and alpha[i] < C)\
+            error_i = sum(kernel(features[i], features) * alpha * labels) + b - labels[i]
+            if not (labels[i] * error_i < -tol and alpha[i] < C)\
                     or (labels[i] * error_i > tol and alpha[i] > 0):
+                temp_list = [i for i in range(len(labels))]
+                temp_list.pop(i)
                 j = random.choice(temp_list)
-                error_j = sum(GKF(features[j], features) * alpha * labels) + b - labels[j]
+                error_j = sum(kernel(features[j], features) * alpha * labels) + b - labels[j]
                 temp_alpha_i_old = alpha[i]
                 temp_alpha_j_old = alpha[j]
                 if labels[i] != labels[j]:
@@ -65,26 +72,27 @@ def SMO_train(features, labels, max_passes=100, C=1, tol=0.001):
                     H = min(C, alpha[i]+alpha[j])
                 if L == H:
                     continue
-                eta = 2 * GKF(features[i], features[j]) - \
-                    GKF(features[i], features[i]) - GKF(features[j], features[j])
+                eta = 2 * kernel(features[i], features[j]) - \
+                    kernel(features[i], features[i]) - kernel(features[j], features[j])
                 if eta >= 0:
                     continue
+                alpha[j] = alpha[j] - labels[j] * (error_i - error_j) / eta
                 if alpha[j] > H:
                     alpha[j] = H
                 elif alpha[j] < L:
                     alpha[j] = L
                 else:
-                    alpha[j] = alpha[j] - labels[j] * (error_i - error_j) / eta
+                    pass
                 if abs(alpha[j] - temp_alpha_j_old) < 10**(-5):
                     continue
                 alpha[i] = alpha[i] + labels[i] * labels[j] * (temp_alpha_j_old - alpha[j])
 
                 b1 = b - error_i - labels[i]*(alpha[i]-temp_alpha_i_old)* \
-                     GKF(features[i],features[i]) - labels[j]*(alpha[j]-temp_alpha_j_old) * \
-                     GKF(features[i],features[j])
+                     kernel(features[i],features[i]) - labels[j]*(alpha[j]-temp_alpha_j_old) * \
+                     kernel(features[i],features[j])
                 b2 = b - error_j - labels[i]*(alpha[i]-temp_alpha_i_old) * \
-                     GKF(features[i],features[j]) - labels[j]*(alpha[j]-temp_alpha_j_old) * \
-                     GKF(features[j],features[j])
+                     kernel(features[i],features[j]) - labels[j]*(alpha[j]-temp_alpha_j_old) * \
+                     kernel(features[j],features[j])
                 if 0 < alpha[i] < C:
                     b = b1
                 elif 0 < alpha[j] < C:
