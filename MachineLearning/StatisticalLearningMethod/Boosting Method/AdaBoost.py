@@ -1,8 +1,7 @@
 import sklearn.datasets as datasets
 from sklearn.model_selection import train_test_split
-
+from sklearn.tree import DecisionTreeClassifier
 import numpy as np
-import time
 
 '''
 The core of the boost method is that the judge of many experts better than only one for a complicated task.
@@ -23,22 +22,39 @@ def get_data():
     return X_train, X_test, y_train, y_test
 
 class AdaBoost(object):
-    def init_args(self,X, Y):
-        self.X = X
-        self.Y = Y
-        self.D = np.ones(len(self.Y)) / len(self.Y)
-        self.classifier_set = {}
-        self.m = 100        # the number of weakly classifier
-        self.error = 0.0    # the Classification error rate
+    def __init__(self):
+        self.clf_set = {}
 
-    def add(self, index, classifier):
-        self.classifier_set[index] = classifier
+    def add(self, index, clf, alpha):
+        self.clf_set[index] = (clf, alpha)
 
-    def train(self, features, labels):
-        self.init_args(features, labels)
+    def train(self, X_train, y_train, M=20):
+        w = np.ones(len(X_train)) / len(X_train)
+        # weak_clf = DecisionTreeClassifier(max_depth=1)
+        for i in range(M):
+            weak_clf = DecisionTreeClassifier(max_depth=1)
+            clf_i = weak_clf.fit(X_train, y_train, sample_weight=w)
+            pred_train_i = clf_i.predict(X_train)
+            error_sample = [int(x) for x in (pred_train_i != y_train)]
+            if sum(error_sample) / len(X_train) < 0.01:
+                break
+            error_i = sum(error_sample*w)
+            alpha_i = 1/2*np.log(1/error_i - 1)
+            self.add(i, clf_i, alpha_i)
+            w = np.multiply(w, np.exp(-1 * alpha_i * y_train * pred_train_i))
+            w = w / sum(w)
 
 
-
+    def predict(self, X_test):
+        temp_ = np.zeros(len(X_test))
+        for i in range(len(self.clf_set)):
+            temp_ += self.clf_set[i][0].predict(X_test) * self.clf_set[i][1]
+        return np.sign(temp_)
 
 if __name__ == '__main__':
     X_train, X_test, y_train, y_test = get_data()
+    AdaBoost = AdaBoost()
+    AdaBoost.train(X_train,y_train)
+    pred = AdaBoost.predict(X_test)
+    score = sum(pred == y_test) / len(y_test)
+    print("the AdaBoost's score is %.4f" % score)
